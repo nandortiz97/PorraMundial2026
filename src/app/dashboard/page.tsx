@@ -162,7 +162,7 @@ function BracketCard({ m, onClick }: { m: Match; onClick: () => void }) {
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function PredictionsDashboard() {
-  const [activeTab, setActiveTab] = useState<"pronosticos" | "clasificacion" | "reglamento" | "admin">("pronosticos");
+  const [activeTab, setActiveTab] = useState<"pronosticos" | "clasificacion" | "reglamento" | "admin">("reglamento");
   const [activePhase, setActivePhase] = useState<string | null>(null);
   const [activeGroupTab, setActiveGroupTab] = useState<GroupLetter>("A");
 
@@ -442,12 +442,12 @@ export default function PredictionsDashboard() {
         </div>
 
         <nav className="hidden md:flex items-center gap-1 bg-[#101524] p-1 rounded-xl border border-slate-800/60">
-          {(["pronosticos", "clasificacion", "reglamento"] as const).map(tab => (
+          {(["reglamento", "pronosticos", "clasificacion"] as const).map(tab => (
             <button key={tab} onClick={() => navigateTo(tab)}
               className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${activeTab === tab
                 ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white"
                 : "text-slate-400 hover:text-white"}`}>
-              {tab === "pronosticos" ? "Mis Pronósticos" : tab === "clasificacion" ? "Clasificación" : "Reglamento"}
+              {tab === "reglamento" ? "Reglamento" : tab === "pronosticos" ? "Mis Pronósticos" : "Clasificación"}
             </button>
           ))}
           {isAdmin && (
