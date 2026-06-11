@@ -15,7 +15,7 @@ import type { PredictionRow, PaymentStatus } from "@/lib/supabase";
 const GROUP_LETTERS: GroupLetter[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
 /** Partido inaugural: 11 jun 2026 a las 21:00h Madrid = 19:00h UTC */
-const KICKOFF_DEADLINE = new Date("2026-06-12T19:00:00Z");
+const KICKOFF_DEADLINE = new Date("2026-06-13T19:00:00Z");
 // Partidos 1 (inaugural 11-jun 21h) y 2 (12-jun 04h) ya iniciados — bloqueados individualmente
 const LOCKED_MATCH_IDS = new Set(["m1", "m2"]);
 
