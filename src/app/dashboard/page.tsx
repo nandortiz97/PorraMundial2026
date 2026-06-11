@@ -9,8 +9,8 @@ import type { User } from "@supabase/supabase-js";
 import type { GroupLetter, Match, Team } from "@/types";
 import { MatchCard } from "@/components/MatchCard";
 import { ClassificationTable } from "@/components/ClassificationTable";
-import { getAuthUser, loadPredictions, savePredictions, saveOfficialResults, getLeaderboard, loadOfficialResults } from "@/lib/supabase";
-import type { PredictionRow } from "@/lib/supabase";
+import { getAuthUser, loadPredictions, savePredictions, saveOfficialResults, getLeaderboard, loadOfficialResults, ensureProfile, getMyPaymentStatus, getAllProfiles, updatePaymentStatus } from "@/lib/supabase";
+import type { PredictionRow, PaymentStatus } from "@/lib/supabase";
 
 const GROUP_LETTERS: GroupLetter[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
@@ -229,6 +229,8 @@ export default function PredictionsDashboard() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
+  const [allProfiles, setAllProfiles] = useState<{ id: string; payment_status: PaymentStatus }[]>([]);
 
   // ── Toast helper ────────────────────────────────────────────────────────────
 
@@ -245,10 +247,17 @@ export default function PredictionsDashboard() {
         const user = await getAuthUser();
         if (user) {
           setAuthUser(user);
-          const [savedResult, boardResult, officialResult] = await Promise.allSettled([
+          const isAdminUser = user.email === "fortiz97@hotmail.com";
+
+          // Garantizar que existe fila en profiles para este usuario
+          await ensureProfile(user.id).catch(() => {});
+
+          const [savedResult, boardResult, officialResult, paymentResult, profilesResult] = await Promise.allSettled([
             loadPredictions(user.id),
             getLeaderboard(),
             loadOfficialResults(),
+            getMyPaymentStatus(user.id),
+            isAdminUser ? getAllProfiles() : Promise.resolve([]),
           ]);
 
           // Each call is independent — one failing doesn't block the others
@@ -262,6 +271,14 @@ export default function PredictionsDashboard() {
             setLeaderboard(boardResult.value);
           } else {
             console.warn("[init] getLeaderboard failed (¿RPC get_leaderboard existe en Supabase?):", boardResult.reason);
+          }
+
+          if (paymentResult.status === "fulfilled") {
+            setPaymentStatus(paymentResult.value);
+          }
+
+          if (profilesResult.status === "fulfilled" && profilesResult.value.length > 0) {
+            setAllProfiles(profilesResult.value);
           }
 
           if (officialResult.status === "fulfilled" && officialResult.value.length > 0) {
@@ -534,15 +551,36 @@ export default function PredictionsDashboard() {
           )}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <span className="text-xs font-black text-slate-200 truncate max-w-[140px] block">
-              {authUser?.email ?? "Sin sesión"}
-            </span>
-            <span className={`text-[9px] font-black block -mt-0.5 ${authUser ? "text-emerald-400" : "text-amber-400"}`}>
-              {authUser ? "Sesión activa" : "No autenticado"}
-            </span>
-          </div>
+        <div className="flex items-center gap-2">
+          {authUser && (
+            <div className="hidden sm:flex flex-col items-end gap-1">
+              <span className="text-xs font-black text-slate-200 truncate max-w-[140px]">
+                {authUser.email}
+              </span>
+              {/* Badge de estado de pago */}
+              {paymentStatus === "pending" && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide bg-red-500/15 border border-red-500/30 text-red-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
+                  Pendiente de Bizum
+                </span>
+              )}
+              {paymentStatus === "review" && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                  En revisión
+                </span>
+              )}
+              {paymentStatus === "confirmed" && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                  Participante Confirmado
+                </span>
+              )}
+            </div>
+          )}
+          {!authUser && (
+            <span className="text-[9px] font-black text-amber-400 hidden sm:block">No autenticado</span>
+          )}
           <div className="h-9 w-9 rounded-xl bg-slate-800 flex items-center justify-center">⚽</div>
         </div>
       </header>
@@ -824,6 +862,80 @@ export default function PredictionsDashboard() {
                       : <><Check className="h-3 w-3" /> Guardar Resultados Oficiales</>
                     }
                   </button>
+                </div>
+
+                {/* ── Gestión de pagos ── */}
+                <div className="gaming-card rounded-2xl border border-slate-700/60 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-800 bg-[#0c101d]/60">
+                    <h3 className="text-sm font-black uppercase italic tracking-wider text-white">💳 Gestión de Pagos</h3>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Haz clic en el badge de cualquier jugador para cambiar su estado.</p>
+                  </div>
+                  {allProfiles.length === 0 ? (
+                    <div className="p-6 text-center text-slate-500 text-xs">No hay perfiles cargados aún.</div>
+                  ) : (
+                    <div className="divide-y divide-slate-800/40">
+                      {allProfiles.map(profile => {
+                        const email: string =
+                          leaderboard.find(l => l.user_id === profile.id)?.email ??
+                          `Usuario ···${profile.id.slice(-4)}`;
+                        const STATUS_CYCLE: PaymentStatus[] = ["pending", "review", "confirmed"];
+                        const nextStatus = STATUS_CYCLE[(STATUS_CYCLE.indexOf(profile.payment_status) + 1) % 3];
+                        const handleCycle = async () => {
+                          try {
+                            await updatePaymentStatus(profile.id, nextStatus);
+                            setAllProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, payment_status: nextStatus } : p));
+                          } catch (err) {
+                            showToast("error", "Error al actualizar el estado de pago.");
+                          }
+                        };
+                        return (
+                          <div key={profile.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#0c101d]/30 transition-colors">
+                            <span className="text-xs text-slate-300 font-bold truncate max-w-[200px]">{email}</span>
+                            <div className="flex items-center gap-2">
+                              {/* Badge actual — clic para avanzar al siguiente estado */}
+                              <button onClick={handleCycle} title={`Cambiar a: ${nextStatus}`}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wide border transition-all hover:scale-105 ${
+                                  profile.payment_status === "pending"
+                                    ? "bg-red-500/15 border-red-500/30 text-red-400 hover:bg-red-500/25"
+                                    : profile.payment_status === "review"
+                                    ? "bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/25"
+                                    : "bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
+                                }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full inline-block ${
+                                  profile.payment_status === "pending" ? "bg-red-400"
+                                  : profile.payment_status === "review" ? "bg-amber-400"
+                                  : "bg-emerald-400"
+                                }`} />
+                                {profile.payment_status === "pending" ? "Pendiente de Bizum"
+                                  : profile.payment_status === "review" ? "En revisión"
+                                  : "Participante Confirmado"}
+                              </button>
+                              {/* Botones directos */}
+                              <div className="flex gap-1">
+                                {(["pending", "review", "confirmed"] as PaymentStatus[]).map(s => (
+                                  <button key={s} onClick={async () => {
+                                    try {
+                                      await updatePaymentStatus(profile.id, s);
+                                      setAllProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, payment_status: s } : p));
+                                    } catch { showToast("error", "Error al actualizar."); }
+                                  }}
+                                    className={`w-5 h-5 rounded-full border transition-all ${
+                                      profile.payment_status === s
+                                        ? s === "pending" ? "bg-red-500 border-red-400"
+                                          : s === "review" ? "bg-amber-500 border-amber-400"
+                                          : "bg-emerald-500 border-emerald-400"
+                                        : "bg-slate-800 border-slate-700 hover:border-slate-500"
+                                    }`}
+                                    title={s}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Phase tabs */}

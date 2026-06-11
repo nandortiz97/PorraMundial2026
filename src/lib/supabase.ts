@@ -127,6 +127,46 @@ export async function loadOfficialResults(): Promise<{
   return (data ?? []) as { id: string; goals_a: number; goals_b: number }[];
 }
 
+// ─── Payment status ──────────────────────────────────────────────────────────
+
+export type PaymentStatus = "pending" | "review" | "confirmed";
+
+/** Ensure a profile row exists for this user (upsert on first login). */
+export async function ensureProfile(userId: string): Promise<void> {
+  await supabase
+    .from("profiles")
+    .upsert({ id: userId }, { onConflict: "id", ignoreDuplicates: true });
+}
+
+/** Return the current user's payment_status (defaults to 'pending' if no row). */
+export async function getMyPaymentStatus(userId: string): Promise<PaymentStatus> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("payment_status")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.payment_status as PaymentStatus) ?? "pending";
+}
+
+/** Admin only: return all profiles with id + payment_status. */
+export async function getAllProfiles(): Promise<{ id: string; payment_status: PaymentStatus }[]> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, payment_status");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as { id: string; payment_status: PaymentStatus }[];
+}
+
+/** Admin only: set a user's payment_status. */
+export async function updatePaymentStatus(userId: string, status: PaymentStatus): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ payment_status: status })
+    .eq("id", userId);
+  if (error) throw new Error(error.message);
+}
+
 /**
  * Admin-only: update official match results.
  *
