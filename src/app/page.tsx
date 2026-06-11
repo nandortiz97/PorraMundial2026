@@ -172,8 +172,12 @@ export default function WelcomePage() {
                 </p>
               </div>
 
-              <div className="p-3 bg-[#0a111a] rounded-xl border border-slate-800/60 text-[10px] text-slate-500 leading-normal">
-                Si no lo recibes en unos minutos, revisa tu carpeta de correo no deseado (spam) o pulsa abajo para volver a intentarlo.
+              <div className="p-3 bg-amber-950/30 rounded-xl border border-amber-600/40 flex items-start gap-2.5 text-left">
+                <span className="text-lg flex-shrink-0">📬</span>
+                <div>
+                  <p className="text-amber-400 font-black text-[10px] uppercase tracking-wider mb-0.5">Revisa tu carpeta de SPAM</p>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">El correo puede llegar a la carpeta de no deseado. Búscalo ahí si no aparece en el inbox en 1-2 minutos.</p>
+                </div>
               </div>
 
               <button

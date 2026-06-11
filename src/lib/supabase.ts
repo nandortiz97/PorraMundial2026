@@ -150,12 +150,23 @@ export async function getMyPaymentStatus(userId: string): Promise<PaymentStatus>
 }
 
 /** Admin only: return all profiles with id + payment_status. */
-export async function getAllProfiles(): Promise<{ id: string; payment_status: PaymentStatus }[]> {
-  const { data, error } = await supabase
+export async function getAllProfiles(): Promise<{ id: string; payment_status: PaymentStatus; has_predictions: boolean }[]> {
+  const { data: profiles, error } = await supabase
     .from("profiles")
     .select("id, payment_status");
   if (error) throw new Error(error.message);
-  return (data ?? []) as { id: string; payment_status: PaymentStatus }[];
+
+  const { data: preds } = await supabase
+    .from("predictions")
+    .select("user_id");
+
+  const withPreds = new Set((preds ?? []).map((p: any) => p.user_id));
+
+  return (profiles ?? []).map(p => ({
+    id: p.id,
+    payment_status: p.payment_status as PaymentStatus,
+    has_predictions: withPreds.has(p.id),
+  }));
 }
 
 /** Admin only: set a user's payment_status. */

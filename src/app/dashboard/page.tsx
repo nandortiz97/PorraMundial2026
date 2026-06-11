@@ -232,7 +232,7 @@ export default function PredictionsDashboard() {
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
-  const [allProfiles, setAllProfiles] = useState<{ id: string; payment_status: PaymentStatus }[]>([]);
+  const [allProfiles, setAllProfiles] = useState<{ id: string; payment_status: PaymentStatus; has_predictions: boolean }[]>([]);
 
   // ── Toast helper ────────────────────────────────────────────────────────────
 
@@ -790,6 +790,36 @@ export default function PredictionsDashboard() {
 
             {/* ── CLASIFICACIÓN ──────────────────────────────────────────────── */}
             {activeTab === "clasificacion" && (
+              <div className="space-y-4">
+
+              {/* Participantes registrados */}
+              <div className="gaming-card rounded-2xl border border-slate-800 overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-800 bg-[#0c101d]/60">
+                  <h3 className="text-sm font-black uppercase italic tracking-wider text-white">👥 Participantes</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{leaderboard.length} inscrito{leaderboard.length !== 1 ? "s" : ""} con pronósticos guardados</p>
+                </div>
+                <div className="divide-y divide-slate-800/40 max-h-48 overflow-y-auto">
+                  {leaderboard.length === 0 ? (
+                    <div className="p-6 text-center text-slate-500 text-xs">Nadie ha guardado pronósticos aún.</div>
+                  ) : leaderboard.map((row, idx) => {
+                    const email: string = row.email ?? row.user_email ?? `Jugador ${idx + 1}`;
+                    const name = email.split("@")[0];
+                    const isMe = row.user_id === authUser?.id || row.email === authUser?.email;
+                    return (
+                      <div key={row.user_id ?? idx} className={`flex items-center gap-3 px-5 py-2.5 ${isMe ? "bg-emerald-950/20" : "hover:bg-[#0c101d]/20"}`}>
+                        <div className="w-7 h-7 rounded-full bg-emerald-900/40 border border-emerald-700/30 flex items-center justify-center text-[10px] font-black text-emerald-400 uppercase flex-shrink-0">
+                          {name[0]}
+                        </div>
+                        <span className={`text-xs font-bold truncate flex-1 ${isMe ? "text-emerald-400" : "text-slate-300"}`}>
+                          {email}{isMe && <span className="ml-2 text-[8px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded uppercase tracking-wider">Tú</span>}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Clasificación */}
               <div className="gaming-card rounded-2xl border border-slate-800 overflow-hidden">
                 <div className="px-5 py-3 border-b border-slate-800 bg-[#0c101d]/60">
                   <h3 className="text-sm font-black uppercase italic tracking-wider text-white">Clasificación Global</h3>
@@ -848,6 +878,8 @@ export default function PredictionsDashboard() {
                   </>
                 )}
               </div>
+
+              </div>
             )}
 
             {/* ── ADMIN ──────────────────────────────────────────────────────── */}
@@ -901,9 +933,13 @@ export default function PredictionsDashboard() {
                           }
                         };
                         return (
-                          <div key={profile.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#0c101d]/30 transition-colors">
-                            <span className="text-xs text-slate-300 font-bold truncate max-w-[200px]">{email}</span>
-                            <div className="flex items-center gap-2">
+                          <div key={profile.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#0c101d]/30 transition-colors gap-3">
+                            <span className="text-xs text-slate-300 font-bold truncate flex-1 min-w-0">{email}</span>
+                            <span className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide border ${profile.has_predictions ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" : "bg-slate-700/30 border-slate-700/40 text-slate-500"}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full inline-block ${profile.has_predictions ? "bg-emerald-400" : "bg-slate-600"}`} />
+                              {profile.has_predictions ? "Pronóstico ✓" : "Sin pronóstico"}
+                            </span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               {/* Badge actual — clic para avanzar al siguiente estado */}
                               <button onClick={handleCycle} title={`Cambiar a: ${nextStatus}`}
                                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wide border transition-all hover:scale-105 ${
