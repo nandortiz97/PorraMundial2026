@@ -161,15 +161,19 @@ function BracketCard({ m, onClick }: { m: Match; onClick: () => void }) {
 
 // ─── Floating balls for reglamento background ─────────────────────────────────
 
-const FLOATING_BALLS = [
-  { left: "1%",  duration: "14s", delay: "0s"   },
-  { left: "4%",  duration: "11s", delay: "5s"   },
-  { left: "2%",  duration: "18s", delay: "10s"  },
-  { left: "5%",  duration: "15s", delay: "15s"  },
-  { left: "96%", duration: "13s", delay: "2s"   },
-  { left: "99%", duration: "10s", delay: "7s"   },
-  { left: "94%", duration: "16s", delay: "12s"  },
-  { left: "97%", duration: "12s", delay: "4s"   },
+const FLOATING_BALLS: { side: "left" | "right"; offset: string; duration: string; delay: string; size: string }[] = [
+  // Margen izquierdo
+  { side: "left",  offset: "8px",  duration: "16s", delay: "0s",   size: "text-3xl" },
+  { side: "left",  offset: "36px", duration: "12s", delay: "5s",   size: "text-xl"  },
+  { side: "left",  offset: "62px", duration: "20s", delay: "10s",  size: "text-2xl" },
+  { side: "left",  offset: "20px", duration: "14s", delay: "15s",  size: "text-lg"  },
+  { side: "left",  offset: "50px", duration: "18s", delay: "20s",  size: "text-2xl" },
+  // Margen derecho
+  { side: "right", offset: "8px",  duration: "15s", delay: "2s",   size: "text-2xl" },
+  { side: "right", offset: "42px", duration: "11s", delay: "7s",   size: "text-3xl" },
+  { side: "right", offset: "68px", duration: "19s", delay: "12s",  size: "text-xl"  },
+  { side: "right", offset: "24px", duration: "13s", delay: "17s",  size: "text-2xl" },
+  { side: "right", offset: "55px", duration: "17s", delay: "22s",  size: "text-lg"  },
 ];
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -900,14 +904,6 @@ export default function PredictionsDashboard() {
             {activeTab === "reglamento" && (
               <div className="relative space-y-3">
 
-                {/* Floating football balls in the margins */}
-                {FLOATING_BALLS.map((ball, i) => (
-                  <span key={i} className="absolute text-2xl ball-float pointer-events-none select-none"
-                    style={{ left: ball.left, bottom: "-5%", animationDuration: ball.duration, animationDelay: ball.delay }}>
-                    ⚽
-                  </span>
-                ))}
-
                 {/* ── Acordeón ── */}
                 {([
                   { id: "participar", icon: "🎮", label: "¿Cómo Participar?" },
@@ -1045,6 +1041,27 @@ export default function PredictionsDashboard() {
         )}
 
       </main>
+
+      {/* Balones flotantes — solo visibles en la pestaña Reglamento, fijados a los márgenes del viewport */}
+      {activeTab === "reglamento" && (
+        <div className="fixed inset-0 pointer-events-none select-none overflow-hidden z-[5]">
+          {FLOATING_BALLS.map((ball, i) => (
+            <span
+              key={i}
+              className={`absolute ${ball.size} ball-float`}
+              style={{
+                left:  ball.side === "left"  ? ball.offset : "auto",
+                right: ball.side === "right" ? ball.offset : "auto",
+                bottom: "-8%",
+                animationDuration: ball.duration,
+                animationDelay:    ball.delay,
+              }}
+            >
+              ⚽
+            </span>
+          ))}
+        </div>
+      )}
 
       <footer className="bg-[#080c14]/80 border-t border-slate-900 py-4 text-center text-[10px] text-slate-500">
         <p>© 2026 Porra Mundial — 104 Partidos · 12 Grupos · Un Campeón.</p>

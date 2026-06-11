@@ -93,15 +93,20 @@ body {
 
 /* Floating football balls */
 @keyframes floatBall {
-  0%   { transform: translateY(0) rotate(0deg);      opacity: 0;    }
-  8%   { opacity: 0.18; }
-  90%  { opacity: 0.10; }
-  100% { transform: translateY(-110vh) rotate(540deg); opacity: 0;   }
+  0%   { transform: translateY(0)      rotate(0deg)   translateX(0px);   opacity: 0;    }
+  6%   {                                                                    opacity: 0.45; }
+  25%  { transform: translateY(-22vh)  rotate(135deg) translateX(14px);  }
+  50%  { transform: translateY(-50vh)  rotate(270deg) translateX(-10px);  opacity: 0.35; }
+  75%  { transform: translateY(-75vh)  rotate(405deg) translateX(12px);  }
+  94%  {                                                                    opacity: 0.2;  }
+  100% { transform: translateY(-110vh) rotate(540deg) translateX(0px);   opacity: 0;    }
 }
 
 .ball-float {
-  animation: floatBall linear infinite;
+  animation: floatBall ease-in-out infinite;
   will-change: transform;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.55))
+          drop-shadow(0 0 3px rgba(255, 255, 255, 0.15));
 }
 
 /* Shake animation for errors */
