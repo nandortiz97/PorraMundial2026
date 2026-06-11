@@ -17,6 +17,20 @@ const GROUP_LETTERS: GroupLetter[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I
 /** Partido inaugural: 11 jun 2026 a las 21:00h Madrid = 19:00h UTC */
 const KICKOFF_DEADLINE = new Date("2026-06-11T19:00:00Z");
 
+interface TimeLeft { days: number; hours: number; minutes: number; seconds: number; expired: boolean; }
+
+function getTimeLeft(): TimeLeft {
+  const diff = KICKOFF_DEADLINE.getTime() - Date.now();
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+  return {
+    days:    Math.floor(diff / 86_400_000),
+    hours:   Math.floor((diff % 86_400_000) / 3_600_000),
+    minutes: Math.floor((diff % 3_600_000)  / 60_000),
+    seconds: Math.floor((diff % 60_000)     / 1_000),
+    expired: false,
+  };
+}
+
 interface Phase {
   id: string; name: string; matchesCount: number; predictedCount: number;
   icon: React.ReactNode; weight: string;
@@ -197,8 +211,17 @@ export default function PredictionsDashboard() {
   const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Tournament lock — recalculated on every render; no timer needed
-  const isLocked = Date.now() >= KICKOFF_DEADLINE.getTime();
+  // Cuenta atrás en tiempo real — un tick por segundo
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft);
+  useEffect(() => {
+    if (timeLeft.expired) return;
+    const id = setInterval(() => {
+      const next = getTimeLeft();
+      setTimeLeft(next);
+      if (next.expired) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timeLeft.expired]);
 
   // Auth + async state
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -397,6 +420,9 @@ export default function PredictionsDashboard() {
   // Admin gate — only fortiz97@hotmail.com sees the admin tab
   const isAdmin = authUser?.email === "fortiz97@hotmail.com";
 
+  // Bloqueo automático: se activa cuando expira el plazo, salvo para el admin
+  const isLocked = timeLeft.expired && !isAdmin;
+
   const handleAdminGoalChange = (dbId: string, team: "goalsA" | "goalsB", value: string) => {
     const g = value === "" ? "" : Math.max(0, parseInt(value, 10));
     setAdminResults(prev => {
@@ -453,8 +479,33 @@ export default function PredictionsDashboard() {
   return (
     <div className="min-h-screen bg-[#060814] text-white font-sans antialiased flex flex-col">
 
-      {/* HEADER */}
-      <header className="relative z-10 border-b border-slate-900 bg-[#080c14]/80 backdrop-blur-md sticky top-0 px-4 lg:px-8 h-16 flex items-center justify-between">
+      {/* HEADER + COUNTDOWN STRIP */}
+      <div className="sticky top-0 z-10">
+
+        {/* Tira de cuenta atrás */}
+        {timeLeft.expired ? (
+          <div className="flex items-center justify-center gap-2 bg-red-950/90 border-b border-red-800/60 backdrop-blur-md px-4 py-1.5">
+            <span className="text-[10px] leading-none">🔴</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-red-400">
+              Plazo cerrado · Torneo en juego
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 bg-emerald-950/70 border-b border-emerald-800/30 backdrop-blur-md px-4 py-1.5">
+            <span className="text-[10px] leading-none">🟢</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+              Tiempo restante para editar tus pronósticos:&nbsp;
+              <span className="tabular-nums text-white">
+                {timeLeft.days}d&nbsp;
+                {String(timeLeft.hours).padStart(2, "0")}h&nbsp;
+                {String(timeLeft.minutes).padStart(2, "0")}m&nbsp;
+                {String(timeLeft.seconds).padStart(2, "0")}s
+              </span>
+            </span>
+          </div>
+        )}
+
+        <header className="relative border-b border-slate-900 bg-[#080c14]/80 backdrop-blur-md px-4 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo("pronosticos")}>
           <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center">
             <Trophy className="h-5 w-5 text-white" />
@@ -495,6 +546,7 @@ export default function PredictionsDashboard() {
           <div className="h-9 w-9 rounded-xl bg-slate-800 flex items-center justify-center">⚽</div>
         </div>
       </header>
+      </div>{/* end sticky wrapper */}
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 relative z-10">
 

@@ -116,34 +116,41 @@ export default function WelcomePage() {
 
         {/* ── COUNTDOWN ─────────────────────────────────────────────────────── */}
         {timeLeft.expired ? (
-          <div className="flex items-center justify-center gap-3 gaming-card rounded-2xl px-6 py-4 border border-red-700/40 bg-red-950/20">
-            <span className="text-2xl">🔒</span>
-            <div className="text-center">
-              <p className="text-sm font-black text-red-400 uppercase tracking-wider">¡El tiempo se ha agotado!</p>
-              <p className="text-xs text-slate-400 mt-0.5">Los pronósticos están cerrados.</p>
+          <div className="flex items-center justify-center gap-4 rounded-2xl px-6 py-5 border border-red-700/50 bg-red-950/30 shadow-[0_0_30px_rgba(239,68,68,0.15)]">
+            <span className="text-3xl">🔒</span>
+            <div>
+              <p className="text-base font-black text-red-400 uppercase tracking-wider">¡Plazo cerrado!</p>
+              <p className="text-xs text-slate-400 mt-0.5">El torneo está en juego. Los pronósticos están bloqueados.</p>
             </div>
           </div>
         ) : (
-          <div className="gaming-card rounded-2xl px-6 py-5 border border-slate-800/80 space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">
-              ⏱ Tiempo restante para cerrar pronósticos
-            </p>
-            <div className="grid grid-cols-4 gap-2 text-center">
+          <div className="rounded-2xl border border-emerald-700/40 bg-emerald-950/20 shadow-[0_0_35px_rgba(16,185,129,0.12)] overflow-hidden">
+            <div className="px-4 pt-4 pb-2 text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                ⏱ ¡Date prisa! Tiempo restante para guardar pronósticos
+              </p>
+            </div>
+            <div className="grid grid-cols-4 gap-2 px-4 pb-4 text-center">
               {([
-                { value: timeLeft.days,    label: "Días" },
+                { value: timeLeft.days,    label: "Días"  },
                 { value: timeLeft.hours,   label: "Horas" },
-                { value: timeLeft.minutes, label: "Min" },
-                { value: timeLeft.seconds, label: "Seg" },
+                { value: timeLeft.minutes, label: "Min"   },
+                { value: timeLeft.seconds, label: "Seg"   },
               ] as const).map(({ value, label }) => (
-                <div key={label} className="bg-[#080c14] border border-slate-800 rounded-xl py-3 px-1">
-                  <div className="text-3xl font-black text-emerald-400 tabular-nums leading-none">
+                <div key={label} className="bg-[#060e12] border border-emerald-800/40 rounded-xl py-3 px-1 shadow-inner">
+                  <div className="text-4xl font-black text-emerald-400 tabular-nums leading-none drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]">
                     {String(value).padStart(2, "0")}
                   </div>
-                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-emerald-700 mt-1.5">
                     {label}
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="bg-emerald-950/40 border-t border-emerald-800/30 px-4 py-2 text-center">
+              <p className="text-[10px] text-emerald-600 font-black uppercase tracking-wider">
+                Cierre automático: 11 jun 2026 · 21:00h España
+              </p>
             </div>
           </div>
         )}
