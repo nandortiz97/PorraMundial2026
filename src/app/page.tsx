@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Trophy, Mail, ArrowRight, ShieldCheck, Sparkles, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-/** Partido inaugural: 11 jun 2026 21:00h Madrid = 19:00h UTC */
+/** Tercer partido: 12 jun 2026 21:00h Madrid = 19:00h UTC */
 const KICKOFF_DEADLINE = new Date("2026-06-12T19:00:00Z");
 
 interface TimeLeft {
