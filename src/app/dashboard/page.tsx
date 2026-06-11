@@ -178,6 +178,12 @@ export default function PredictionsDashboard() {
   const [activeTab, setActiveTab] = useState<"pronosticos" | "clasificacion" | "reglamento" | "admin">("reglamento");
   const [activePhase, setActivePhase] = useState<string | null>(null);
   const [activeGroupTab, setActiveGroupTab] = useState<GroupLetter>("A");
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["participar"]));
+  const toggleSection = (id: string) => setOpenSections(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
 
   // Admin state — separate from user predictions
   const [activeAdminPhase, setActiveAdminPhase] = useState<string>("grupos");
@@ -892,127 +898,146 @@ export default function PredictionsDashboard() {
 
             {/* ── REGLAMENTO ─────────────────────────────────────────────────── */}
             {activeTab === "reglamento" && (
-              <div className="relative space-y-5">
+              <div className="relative space-y-3">
 
                 {/* Floating football balls in the margins */}
                 {FLOATING_BALLS.map((ball, i) => (
-                  <span
-                    key={i}
-                    className="absolute text-2xl ball-float pointer-events-none select-none"
-                    style={{ left: ball.left, bottom: "-5%", animationDuration: ball.duration, animationDelay: ball.delay }}
-                  >
+                  <span key={i} className="absolute text-2xl ball-float pointer-events-none select-none"
+                    style={{ left: ball.left, bottom: "-5%", animationDuration: ball.duration, animationDelay: ball.delay }}>
                     ⚽
                   </span>
                 ))}
 
-                {/* ── Cómo jugar ── */}
-                <div className="gaming-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
-                  <h3 className="text-lg font-black uppercase italic tracking-wider text-white border-b border-slate-800 pb-2">
-                    🎮 Cómo Jugar
-                  </h3>
-                  <ol className="space-y-3 text-xs text-slate-300">
-                    {[
-                      {
-                        title: "Inicia sesión con tu correo de empresa",
-                        desc: "Pulsa 'Recibir Enlace Mágico' en la pantalla de inicio. Recibirás un email — haz clic en el enlace para entrar directamente, sin contraseña.",
-                      },
-                      {
-                        title: "Ve a 'Mis Pronósticos' y elige una fase",
-                        desc: "Verás 6 fases del torneo. Empieza por la Fase de Grupos: 72 partidos repartidos en 12 grupos (A–L).",
-                      },
-                      {
-                        title: "Fase de Grupos — introduce el marcador",
-                        desc: "Escribe cuántos goles crees que marcará cada selección. Puedes predecir empates. Rellena todos los grupos.",
-                      },
-                      {
-                        title: "Eliminatorias — elige al ganador con un clic",
-                        desc: "Desde Dieciseisavos en adelante no hay goles: haz clic sobre la bandera o nombre del equipo que crees que pasa de ronda.",
-                      },
-                      {
-                        title: "Pulsa el botón verde GUARDAR al terminar cada fase",
-                        desc: "El botón está arriba a la derecha dentro de cada fase. Sin guardarlo, los cambios se perderán al salir.",
-                      },
-                      {
-                        title: "Sigue la Clasificación en tiempo real",
-                        desc: "Conforme el admin introduce los resultados oficiales, tus puntos se actualizan automáticamente en la pestaña 'Clasificación'.",
-                      },
-                    ].map((step, i) => (
-                      <li key={i} className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-[10px]">
-                          {i + 1}
-                        </span>
-                        <div>
-                          <b className="text-white block mb-0.5">{step.title}</b>
-                          <span className="text-slate-400">{step.desc}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
+                {/* ── Acordeón ── */}
+                {([
+                  { id: "participar", icon: "🎮", label: "¿Cómo Participar?" },
+                  { id: "grupos",     icon: "⚽", label: "Fase de Grupos — Puntuación" },
+                  { id: "eliminatorias", icon: "🏆", label: "Fases Eliminatorias — Puntuación" },
+                  { id: "fechas",     icon: "🔒", label: "Fechas Límite" },
+                ] as const).map(({ id, icon, label }) => (
+                  <div key={id} className={`gaming-card rounded-2xl overflow-hidden border ${id === "fechas" ? "border-red-800/40" : "border-slate-800/80"}`}>
 
-                {/* ── Recordatorios importantes ── */}
-                <div className="gaming-card p-6 rounded-2xl border border-amber-800/40 space-y-3">
-                  <h3 className="text-lg font-black uppercase italic tracking-wider text-amber-400 border-b border-amber-800/40 pb-2">
-                    ⚠️ Recordatorios Importantes
-                  </h3>
-                  <div className="space-y-2.5 text-xs">
-                    <div className="flex gap-3 items-start bg-red-950/20 border border-red-700/30 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">💾</span>
-                      <div>
-                        <b className="text-white block mb-0.5">No olvides pulsar GUARDAR</b>
-                        <span className="text-slate-400">Guarda cada fase por separado. Si cambias de pestaña sin guardar, perderás los cambios de esa fase.</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start bg-amber-950/20 border border-amber-700/30 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">🔒</span>
-                      <div>
-                        <b className="text-white block mb-0.5">Fecha límite: 11 junio 2026 · 21:00h España</b>
-                        <span className="text-slate-400">Al pitido inicial del partido inaugural se cierran todos los pronósticos. Después ya no se puede modificar nada.</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">✏️</span>
-                      <div>
-                        <b className="text-white block mb-0.5">Puedes editar cuantas veces quieras antes del cierre</b>
-                        <span className="text-slate-400">Hasta la fecha límite puedes modificar y volver a guardar tus pronósticos libremente.</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">⚽</span>
-                      <div>
-                        <b className="text-white block mb-0.5">En eliminatorias solo se elige ganador, no hay goles</b>
-                        <span className="text-slate-400">Haz clic en el equipo que crees que avanza. Aplica en todas las rondas desde Dieciseisavos hasta la Gran Final.</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    {/* Header */}
+                    <button onClick={() => toggleSection(id)}
+                      className="w-full flex items-center justify-between px-5 py-4 text-left group">
+                      <span className="text-sm font-black uppercase tracking-wider text-white group-hover:text-emerald-400 transition-colors">
+                        {icon} {label}
+                      </span>
+                      <ChevronRight className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${openSections.has(id) ? "rotate-90" : ""}`} />
+                    </button>
 
-                {/* ── Sistema de puntuación ── */}
-                <div className="gaming-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
-                  <h3 className="text-lg font-black uppercase italic tracking-wider text-white border-b border-slate-800 pb-2">
-                    🏆 Sistema de Puntuación
-                  </h3>
-                  <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
-                    <p>Los coeficientes multiplicadores premian el riesgo conforme avanza el torneo.</p>
-                    <p className="text-slate-400">Fórmula por partido: <b className="text-white">(Signo + Bonus Pleno) × Factor de Fase</b></p>
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-[11px] space-y-1 text-slate-400">
-                      <p>✅ <b className="text-white">Acierto de Signo</b> (ganador o empate correcto) → <b className="text-amber-400">1 pt base</b></p>
-                      <p>🎯 <b className="text-white">Acierto de Pleno</b> (goles exactos, solo grupos) → <b className="text-emerald-400">+1 pt extra</b></p>
-                      <p>⚡ <b className="text-white">Máximo pre-factor</b> → <b className="text-white">2 pts</b> (1 signo + 1 pleno)</p>
-                    </div>
-                    <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
-                      <li><b className="text-slate-200">Fase de Grupos:</b> ×1 — Pleno: <b className="text-emerald-400">2 pts</b> | Signo: <b className="text-amber-400">1 pt</b></li>
-                      <li><b className="text-slate-200">Dieciseisavos:</b> ×2 — Ganador: <b className="text-amber-400">2 pts</b></li>
-                      <li><b className="text-slate-200">Octavos de Final:</b> ×3 — Ganador: <b className="text-amber-400">3 pts</b></li>
-                      <li><b className="text-slate-200">Cuartos de Final:</b> ×4 — Ganador: <b className="text-amber-400">4 pts</b></li>
-                      <li><b className="text-slate-200">Semifinales:</b> ×5 — Ganador: <b className="text-amber-400">5 pts</b></li>
-                      <li><b className="text-slate-200">Final y 3er Puesto:</b> ×6 — Ganador: <b className="text-amber-400">6 pts</b></li>
-                    </ul>
-                    <p className="text-slate-500 text-[11px]">
-                      En eliminatorias no se puntúa el pleno — solo acertar el equipo que avanza.
-                    </p>
+                    {/* Body */}
+                    {openSections.has(id) && (
+                      <div className="px-5 pb-5 border-t border-slate-800/60 pt-4 text-xs text-slate-300 space-y-3">
+
+                        {id === "participar" && (
+                          <>
+                            <p className="text-slate-400 italic">Esta pantalla es la primera que verás al entrar — léela antes de empezar a rellenar pronósticos.</p>
+                            <ol className="space-y-3">
+                              {[
+                                { t: "Inicia sesión con tu correo de empresa", d: "En la pantalla de acceso, introduce tu correo y pulsa 'Recibir Enlace Mágico'. Recibirás un email — haz clic en el enlace para entrar directamente, sin contraseña." },
+                                { t: "Ve a la pestaña 'Mis Pronósticos'", d: "Verás 6 fases del torneo ordenadas por importancia. Empieza por la Fase de Grupos." },
+                                { t: "Rellena tus predicciones fase a fase", d: "En grupos introduces marcadores; en eliminatorias haces clic en el equipo ganador. Puedes rellenar varias fases en la misma sesión." },
+                                { t: "⚠️ Pulsa 'Guardar Pronósticos' al terminar CADA fase", d: "El botón verde aparece en la parte superior de cada fase. Es obligatorio pulsarlo en cada una por separado. Si cambias de pestaña sin guardar, los cambios de esa fase se perderán definitivamente." },
+                                { t: "Edita cuantas veces quieras antes del cierre", d: "Puedes volver a cualquier fase, modificar tus predicciones y volver a guardar. Todo cambio guardado antes de la fecha límite es válido." },
+                              ].map((s, i) => (
+                                <li key={i} className="flex gap-3">
+                                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-[10px]">{i + 1}</span>
+                                  <div><b className="text-white block mb-0.5">{s.t}</b><span className="text-slate-400">{s.d}</span></div>
+                                </li>
+                              ))}
+                            </ol>
+                          </>
+                        )}
+
+                        {id === "grupos" && (
+                          <>
+                            <p>72 partidos repartidos en 12 grupos (A–L). Para cada partido introduces el marcador exacto que crees que será el resultado final.</p>
+                            <div className="space-y-2">
+                              <div className="flex gap-3 items-start bg-emerald-950/20 border border-emerald-700/30 rounded-xl p-3">
+                                <span className="text-lg flex-shrink-0">🎯</span>
+                                <div>
+                                  <b className="text-emerald-400 block mb-0.5">3 PUNTOS — Pleno Exacto</b>
+                                  <span className="text-slate-400">Aciertas el resultado exacto del partido.<br />
+                                  <span className="text-slate-500 italic">Ejemplo: pronosticas 2-1 y el partido acaba 2-1 → 3 puntos.</span></span>
+                                </div>
+                              </div>
+                              <div className="flex gap-3 items-start bg-amber-950/20 border border-amber-700/30 rounded-xl p-3">
+                                <span className="text-lg flex-shrink-0">✅</span>
+                                <div>
+                                  <b className="text-amber-400 block mb-0.5">1 PUNTO — Signo Correcto</b>
+                                  <span className="text-slate-400">Aciertas quién gana (o que hay empate) pero no el marcador exacto.<br />
+                                  <span className="text-slate-500 italic">Ejemplo: pronosticas 3-0 y el partido acaba 1-0 → 1 punto (ganó el mismo equipo, pero con diferente marcador).</span></span>
+                                </div>
+                              </div>
+                              <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
+                                <span className="text-lg flex-shrink-0">❌</span>
+                                <div>
+                                  <b className="text-slate-300 block mb-0.5">0 PUNTOS — Fallo</b>
+                                  <span className="text-slate-400">El ganador o empate que pronosticaste es incorrecto.<br />
+                                  <span className="text-slate-500 italic">Ejemplo: pronosticas victoria local y gana el visitante → 0 puntos.</span></span>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {id === "eliminatorias" && (
+                          <>
+                            <div className="bg-red-950/20 border border-red-700/30 rounded-xl p-3 mb-2">
+                              <b className="text-red-400 uppercase tracking-wider block mb-1">⚠️ A partir de Dieciseisavos NO HAY GOLES</b>
+                              <span className="text-slate-400">Solo debes hacer clic en la selección que crees que <b className="text-white">avanzará de ronda</b>. No se introduce ningún marcador.</span>
+                            </div>
+                            <p className="text-slate-400">Si esa selección pasa de ronda —ya sea en los 90 minutos, en la prórroga o en los penaltis— sumarás los puntos de esa ronda. El resultado del partido no importa, solo quien avanza.</p>
+                            <div className="bg-slate-900/50 border border-slate-700/40 rounded-xl p-3 space-y-1.5">
+                              <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider mb-2">Puntos por ronda</p>
+                              {[
+                                ["Dieciseisavos", "2 pts"],
+                                ["Octavos de Final", "3 pts"],
+                                ["Cuartos de Final", "4 pts"],
+                                ["Semifinales", "5 pts"],
+                                ["Final y 3er Puesto", "6 pts"],
+                              ].map(([fase, pts]) => (
+                                <div key={fase} className="flex justify-between items-center">
+                                  <span className="text-slate-400">{fase}</span>
+                                  <span className="font-black text-amber-400">{pts}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+
+                        {id === "fechas" && (
+                          <>
+                            <div className="flex gap-3 items-start bg-amber-950/20 border border-amber-700/30 rounded-xl p-3">
+                              <span className="text-lg flex-shrink-0">📅</span>
+                              <div>
+                                <b className="text-white block mb-0.5">Fecha límite de edición</b>
+                                <span className="text-slate-400">Puedes guardar y modificar tus pronósticos hasta el inicio del primer partido del Mundial:<br />
+                                <b className="text-amber-400">11 de junio de 2026 · 21:00h (hora España)</b></span>
+                              </div>
+                            </div>
+                            <div className="flex gap-3 items-start bg-red-950/30 border border-red-600/50 rounded-xl p-3">
+                              <span className="text-lg flex-shrink-0">🔒</span>
+                              <div>
+                                <b className="text-red-400 uppercase tracking-wider block mb-1">BLOQUEO AUTOMÁTICO</b>
+                                <span className="text-slate-300">Una vez que empiece el primer partido del Mundial, <b className="text-white">la plataforma bloqueará la edición para todos los usuarios</b>. Podrás seguir viendo tus predicciones y la clasificación, pero <b className="text-white">ya no podrás modificar nada</b>.</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
+                              <span className="text-lg flex-shrink-0">✏️</span>
+                              <div>
+                                <b className="text-white block mb-0.5">Antes del cierre puedes editar libremente</b>
+                                <span className="text-slate-400">Hasta la fecha límite, vuelve cuantas veces quieras a cualquier fase, modifica tus predicciones y pulsa Guardar. Cada guardado sobreescribe el anterior.</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                      </div>
+                    )}
                   </div>
-                </div>
+                ))}
 
               </div>
             )}
