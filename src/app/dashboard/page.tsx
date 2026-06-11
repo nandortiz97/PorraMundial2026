@@ -561,7 +561,7 @@ export default function PredictionsDashboard() {
               {paymentStatus === "pending" && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide bg-red-500/15 border border-red-500/30 text-red-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
-                  Pendiente de Bizum
+                  Pendiente de Pago
                 </span>
               )}
               {paymentStatus === "review" && (
@@ -906,7 +906,7 @@ export default function PredictionsDashboard() {
                                   : profile.payment_status === "review" ? "bg-amber-400"
                                   : "bg-emerald-400"
                                 }`} />
-                                {profile.payment_status === "pending" ? "Pendiente de Bizum"
+                                {profile.payment_status === "pending" ? "Pendiente de Pago"
                                   : profile.payment_status === "review" ? "En revisión"
                                   : "Participante Confirmado"}
                               </button>
@@ -1071,11 +1071,12 @@ export default function PredictionsDashboard() {
                 {/* ── Acordeón ── */}
                 {([
                   { id: "participar", icon: "🎮", label: "¿Cómo Participar?" },
+                  { id: "pago",       icon: "💳", label: "Inscripción y Pago" },
                   { id: "grupos",     icon: "⚽", label: "Fase de Grupos — Puntuación" },
                   { id: "eliminatorias", icon: "🏆", label: "Fases Eliminatorias — Puntuación" },
                   { id: "fechas",     icon: "🔒", label: "Fechas Límite" },
                 ] as const).map(({ id, icon, label }) => (
-                  <div key={id} className={`gaming-card rounded-2xl overflow-hidden border ${id === "fechas" ? "border-red-800/40" : "border-slate-800/80"}`}>
+                  <div key={id} className={`gaming-card rounded-2xl overflow-hidden border ${id === "fechas" ? "border-red-800/40" : id === "pago" ? "border-emerald-800/40" : "border-slate-800/80"}`}>
 
                     {/* Header */}
                     <button onClick={() => toggleSection(id)}
@@ -1107,6 +1108,53 @@ export default function PredictionsDashboard() {
                                 </li>
                               ))}
                             </ol>
+                          </>
+                        )}
+
+                        {id === "pago" && (
+                          <>
+                            <p className="text-slate-400 italic">Para que tu participación sea oficial debes abonar la cuota antes de la fecha límite.</p>
+
+                            <div className="flex gap-3 items-center bg-emerald-950/20 border border-emerald-700/30 rounded-xl p-4">
+                              <span className="text-2xl flex-shrink-0">🏷️</span>
+                              <div>
+                                <b className="text-emerald-400 text-xs uppercase tracking-wider block mb-0.5">Cuota de Inscripción</b>
+                                <span className="text-white font-black text-2xl">5 €</span>
+                              </div>
+                            </div>
+
+                            <div className="bg-[#0b0f1c] border border-slate-700/60 rounded-xl p-4 space-y-3">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Datos de la Transferencia</p>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Método de pago</span>
+                                <span className="text-slate-200 font-bold text-sm">Transferencia bancaria</span>
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Número de cuenta (IBAN)</span>
+                                <span className="font-black text-emerald-400 text-lg tracking-widest select-all">ES65 1583 0001 1090 1951 5393</span>
+                              </div>
+                            </div>
+
+                            <div className="bg-amber-950/25 border border-amber-600/50 rounded-xl p-4 space-y-2">
+                              <p className="text-amber-400 font-black uppercase tracking-wider text-xs">⚠️ Muy Importante — Concepto de la Transferencia</p>
+                              <p className="text-slate-300 text-xs leading-relaxed">
+                                Es <b className="text-white">obligatorio</b> indicar en el concepto:
+                              </p>
+                              <div className="bg-[#0b0f1c] border border-amber-700/30 rounded-lg px-3 py-2.5 font-black text-amber-300 text-sm text-center tracking-wide">
+                                Nombre · Apellido · Email de registro
+                              </div>
+                              <p className="text-slate-500 text-[10px] italic">
+                                Sin estos datos exactos tu estado permanecerá como &ldquo;Pendiente de Validación&rdquo; y no podrás optar al premio.
+                              </p>
+                            </div>
+
+                            <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
+                              <span className="text-lg flex-shrink-0">🔔</span>
+                              <div>
+                                <b className="text-white block mb-0.5">Seguimiento en tiempo real</b>
+                                <span className="text-slate-400 text-xs">Una vez realices la transferencia, el badge de tu cabecera cambiará de <b className="text-red-400">Pendiente de Pago</b> a <b className="text-amber-400">En revisión</b> y finalmente a <b className="text-emerald-400">Participante Confirmado</b> cuando el admin lo valide.</span>
+                              </div>
+                            </div>
                           </>
                         )}
 

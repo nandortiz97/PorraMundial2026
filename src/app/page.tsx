@@ -248,6 +248,25 @@ export default function WelcomePage() {
           )}
         </div>
 
+        {/* Quick guide */}
+        <div className="gaming-card rounded-2xl p-5 border border-slate-800/80 space-y-3">
+          <p className="text-xs font-black uppercase tracking-widest text-emerald-400">📝 ¿Cómo participar?</p>
+          <ol className="space-y-2.5">
+            {[
+              "Regístrate o inicia sesión con tu correo electrónico.",
+              "Completa y guarda tus pronósticos en el Dashboard antes de que expire la cuenta atrás.",
+              "En el panel, dentro de la sección Reglamento, encontrarás las instrucciones exactas para abonar la inscripción y confirmar tu plaza oficial.",
+            ].map((step, i) => (
+              <li key={i} className="flex gap-2.5 text-xs text-slate-400">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-[9px]">
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
         {/* Info widgets styled like Gamer Stats */}
         <div className="grid grid-cols-2 gap-4 text-center">
           <div className="gaming-card p-4 rounded-xl">
