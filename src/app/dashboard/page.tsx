@@ -159,6 +159,19 @@ function BracketCard({ m, onClick }: { m: Match; onClick: () => void }) {
   );
 }
 
+// ─── Floating balls for reglamento background ─────────────────────────────────
+
+const FLOATING_BALLS = [
+  { left: "1%",  duration: "14s", delay: "0s"   },
+  { left: "4%",  duration: "11s", delay: "5s"   },
+  { left: "2%",  duration: "18s", delay: "10s"  },
+  { left: "5%",  duration: "15s", delay: "15s"  },
+  { left: "96%", duration: "13s", delay: "2s"   },
+  { left: "99%", duration: "10s", delay: "7s"   },
+  { left: "94%", duration: "16s", delay: "12s"  },
+  { left: "97%", duration: "12s", delay: "4s"   },
+];
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function PredictionsDashboard() {
@@ -879,30 +892,128 @@ export default function PredictionsDashboard() {
 
             {/* ── REGLAMENTO ─────────────────────────────────────────────────── */}
             {activeTab === "reglamento" && (
-              <div className="gaming-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
-                <h3 className="text-lg font-black uppercase italic tracking-wider text-white border-b border-slate-800 pb-2">
-                  Manual Oficial de Puntuaciones
-                </h3>
-                <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
-                  <p>Los coeficientes multiplicadores premian el riesgo conforme avanza el torneo.</p>
-                  <p className="text-slate-400">Fórmula por partido: <b className="text-white">(Signo + Bonus Pleno) × Factor de Fase</b></p>
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-[11px] space-y-1 text-slate-400">
-                    <p>✅ <b className="text-white">Acierto de Signo</b> (ganador o empate correcto) → <b className="text-amber-400">1 pt base</b></p>
-                    <p>🎯 <b className="text-white">Acierto de Pleno</b> (goles exactos) → <b className="text-emerald-400">+1 pt extra</b> acumulativo al signo</p>
-                    <p>⚡ <b className="text-white">Máximo pre-factor</b> → <b className="text-white">2 pts</b> (1 signo + 1 pleno)</p>
-                  </div>
-                  <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
-                    <li><b className="text-slate-200">Fase de Grupos:</b> ×1 — Pleno: <b className="text-emerald-400">2 pts</b> | Signo: <b className="text-amber-400">1 pt</b></li>
-                    <li><b className="text-slate-200">Dieciseisavos:</b> ×2 — Pleno: <b className="text-emerald-400">4 pts</b> | Signo: <b className="text-amber-400">2 pts</b></li>
-                    <li><b className="text-slate-200">Octavos de Final:</b> ×3 — Pleno: <b className="text-emerald-400">6 pts</b> | Signo: <b className="text-amber-400">3 pts</b></li>
-                    <li><b className="text-slate-200">Cuartos de Final:</b> ×4 — Pleno: <b className="text-emerald-400">8 pts</b> | Signo: <b className="text-amber-400">4 pts</b></li>
-                    <li><b className="text-slate-200">Semifinales:</b> ×5 — Pleno: <b className="text-emerald-400">10 pts</b> | Signo: <b className="text-amber-400">5 pts</b></li>
-                    <li><b className="text-slate-200">Final y 3er Puesto:</b> ×6 — Pleno: <b className="text-emerald-400">12 pts</b> | Signo: <b className="text-amber-400">6 pts</b></li>
-                  </ul>
-                  <p className="text-slate-500 text-[11px]">
-                    En fases eliminatorias con empate técnico, debes indicar manualmente el equipo que avanza (penaltis).
-                  </p>
+              <div className="relative space-y-5">
+
+                {/* Floating football balls in the margins */}
+                {FLOATING_BALLS.map((ball, i) => (
+                  <span
+                    key={i}
+                    className="absolute text-2xl ball-float pointer-events-none select-none"
+                    style={{ left: ball.left, bottom: "-5%", animationDuration: ball.duration, animationDelay: ball.delay }}
+                  >
+                    ⚽
+                  </span>
+                ))}
+
+                {/* ── Cómo jugar ── */}
+                <div className="gaming-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
+                  <h3 className="text-lg font-black uppercase italic tracking-wider text-white border-b border-slate-800 pb-2">
+                    🎮 Cómo Jugar
+                  </h3>
+                  <ol className="space-y-3 text-xs text-slate-300">
+                    {[
+                      {
+                        title: "Inicia sesión con tu correo de empresa",
+                        desc: "Pulsa 'Recibir Enlace Mágico' en la pantalla de inicio. Recibirás un email — haz clic en el enlace para entrar directamente, sin contraseña.",
+                      },
+                      {
+                        title: "Ve a 'Mis Pronósticos' y elige una fase",
+                        desc: "Verás 6 fases del torneo. Empieza por la Fase de Grupos: 72 partidos repartidos en 12 grupos (A–L).",
+                      },
+                      {
+                        title: "Fase de Grupos — introduce el marcador",
+                        desc: "Escribe cuántos goles crees que marcará cada selección. Puedes predecir empates. Rellena todos los grupos.",
+                      },
+                      {
+                        title: "Eliminatorias — elige al ganador con un clic",
+                        desc: "Desde Dieciseisavos en adelante no hay goles: haz clic sobre la bandera o nombre del equipo que crees que pasa de ronda.",
+                      },
+                      {
+                        title: "Pulsa el botón verde GUARDAR al terminar cada fase",
+                        desc: "El botón está arriba a la derecha dentro de cada fase. Sin guardarlo, los cambios se perderán al salir.",
+                      },
+                      {
+                        title: "Sigue la Clasificación en tiempo real",
+                        desc: "Conforme el admin introduce los resultados oficiales, tus puntos se actualizan automáticamente en la pestaña 'Clasificación'.",
+                      },
+                    ].map((step, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-[10px]">
+                          {i + 1}
+                        </span>
+                        <div>
+                          <b className="text-white block mb-0.5">{step.title}</b>
+                          <span className="text-slate-400">{step.desc}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
+
+                {/* ── Recordatorios importantes ── */}
+                <div className="gaming-card p-6 rounded-2xl border border-amber-800/40 space-y-3">
+                  <h3 className="text-lg font-black uppercase italic tracking-wider text-amber-400 border-b border-amber-800/40 pb-2">
+                    ⚠️ Recordatorios Importantes
+                  </h3>
+                  <div className="space-y-2.5 text-xs">
+                    <div className="flex gap-3 items-start bg-red-950/20 border border-red-700/30 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">💾</span>
+                      <div>
+                        <b className="text-white block mb-0.5">No olvides pulsar GUARDAR</b>
+                        <span className="text-slate-400">Guarda cada fase por separado. Si cambias de pestaña sin guardar, perderás los cambios de esa fase.</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start bg-amber-950/20 border border-amber-700/30 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">🔒</span>
+                      <div>
+                        <b className="text-white block mb-0.5">Fecha límite: 11 junio 2026 · 21:00h España</b>
+                        <span className="text-slate-400">Al pitido inicial del partido inaugural se cierran todos los pronósticos. Después ya no se puede modificar nada.</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">✏️</span>
+                      <div>
+                        <b className="text-white block mb-0.5">Puedes editar cuantas veces quieras antes del cierre</b>
+                        <span className="text-slate-400">Hasta la fecha límite puedes modificar y volver a guardar tus pronósticos libremente.</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">⚽</span>
+                      <div>
+                        <b className="text-white block mb-0.5">En eliminatorias solo se elige ganador, no hay goles</b>
+                        <span className="text-slate-400">Haz clic en el equipo que crees que avanza. Aplica en todas las rondas desde Dieciseisavos hasta la Gran Final.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Sistema de puntuación ── */}
+                <div className="gaming-card p-6 rounded-2xl border border-slate-800/80 space-y-4">
+                  <h3 className="text-lg font-black uppercase italic tracking-wider text-white border-b border-slate-800 pb-2">
+                    🏆 Sistema de Puntuación
+                  </h3>
+                  <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
+                    <p>Los coeficientes multiplicadores premian el riesgo conforme avanza el torneo.</p>
+                    <p className="text-slate-400">Fórmula por partido: <b className="text-white">(Signo + Bonus Pleno) × Factor de Fase</b></p>
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-[11px] space-y-1 text-slate-400">
+                      <p>✅ <b className="text-white">Acierto de Signo</b> (ganador o empate correcto) → <b className="text-amber-400">1 pt base</b></p>
+                      <p>🎯 <b className="text-white">Acierto de Pleno</b> (goles exactos, solo grupos) → <b className="text-emerald-400">+1 pt extra</b></p>
+                      <p>⚡ <b className="text-white">Máximo pre-factor</b> → <b className="text-white">2 pts</b> (1 signo + 1 pleno)</p>
+                    </div>
+                    <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
+                      <li><b className="text-slate-200">Fase de Grupos:</b> ×1 — Pleno: <b className="text-emerald-400">2 pts</b> | Signo: <b className="text-amber-400">1 pt</b></li>
+                      <li><b className="text-slate-200">Dieciseisavos:</b> ×2 — Ganador: <b className="text-amber-400">2 pts</b></li>
+                      <li><b className="text-slate-200">Octavos de Final:</b> ×3 — Ganador: <b className="text-amber-400">3 pts</b></li>
+                      <li><b className="text-slate-200">Cuartos de Final:</b> ×4 — Ganador: <b className="text-amber-400">4 pts</b></li>
+                      <li><b className="text-slate-200">Semifinales:</b> ×5 — Ganador: <b className="text-amber-400">5 pts</b></li>
+                      <li><b className="text-slate-200">Final y 3er Puesto:</b> ×6 — Ganador: <b className="text-amber-400">6 pts</b></li>
+                    </ul>
+                    <p className="text-slate-500 text-[11px]">
+                      En eliminatorias no se puntúa el pleno — solo acertar el equipo que avanza.
+                    </p>
+                  </div>
+                </div>
+
               </div>
             )}
           </>
