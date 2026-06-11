@@ -73,7 +73,7 @@ export default function WelcomePage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin + "/dashboard",
+          emailRedirectTo: "https://porra-mundial2026-six.vercel.app/dashboard",
         },
       });
 
