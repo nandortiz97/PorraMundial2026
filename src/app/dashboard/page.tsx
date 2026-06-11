@@ -15,7 +15,9 @@ import type { PredictionRow, PaymentStatus } from "@/lib/supabase";
 const GROUP_LETTERS: GroupLetter[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
 /** Partido inaugural: 11 jun 2026 a las 21:00h Madrid = 19:00h UTC */
-const KICKOFF_DEADLINE = new Date("2026-06-11T19:00:00Z");
+const KICKOFF_DEADLINE = new Date("2026-06-12T19:00:00Z");
+// Partidos 1 (inaugural 11-jun 21h) y 2 (12-jun 04h) ya iniciados — bloqueados individualmente
+const LOCKED_MATCH_IDS = new Set(["m1", "m2"]);
 
 interface TimeLeft { days: number; hours: number; minutes: number; seconds: number; expired: boolean; }
 
@@ -411,6 +413,7 @@ export default function PredictionsDashboard() {
       const rows: Omit<PredictionRow, "user_id">[] = matches
         .filter(m => {
           if (!m.dbId || m.teamA === "Por Seleccionar" || m.teamB === "Por Seleccionar") return false;
+          if (LOCKED_MATCH_IDS.has(m.dbId)) return false;
           return m.group
             ? m.goalsA !== "" && m.goalsB !== ""
             : m.qualifier != null;
@@ -756,20 +759,29 @@ export default function PredictionsDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {(matchesByPhase[activePhase] || [])
                         .filter(m => activePhase !== "grupos" || m.group === activeGroupTab)
-                        .map(match => (
-                          <MatchCard
-                            key={match.id}
-                            match={match}
-                            isKnockout={activePhase !== "grupos"}
-                            isLocked={isLocked}
-                            hasError={validationErrors.includes(match.id)}
-                            usedTeams={getUsedTeams(activePhase)}
-                            availableTeams={AVAILABLE_TEAMS}
-                            onTeamChange={handleTeamChange}
-                            onGoalChange={handleGoalChange}
-                            onQualifierSelect={handleQualifier}
-                          />
-                        ))}
+                        .map(match => {
+                          const isMatchLocked = LOCKED_MATCH_IDS.has(match.dbId ?? "");
+                          return (
+                            <div key={match.id}>
+                              {isMatchLocked && (
+                                <div className="flex items-center gap-1.5 mb-2 px-3 py-1.5 bg-red-950/30 border border-red-700/40 rounded-lg text-[10px] font-black text-red-400 uppercase tracking-wider">
+                                  🔒 Partido iniciado · Plazo cerrado
+                                </div>
+                              )}
+                              <MatchCard
+                                match={match}
+                                isKnockout={activePhase !== "grupos"}
+                                isLocked={isLocked || isMatchLocked}
+                                hasError={validationErrors.includes(match.id)}
+                                usedTeams={getUsedTeams(activePhase)}
+                                availableTeams={AVAILABLE_TEAMS}
+                                onTeamChange={handleTeamChange}
+                                onGoalChange={handleGoalChange}
+                                onQualifierSelect={handleQualifier}
+                              />
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
                 )}
@@ -1217,26 +1229,33 @@ export default function PredictionsDashboard() {
 
                         {id === "fechas" && (
                           <>
-                            <div className="flex gap-3 items-start bg-amber-950/20 border border-amber-700/30 rounded-xl p-3">
-                              <span className="text-lg flex-shrink-0">📅</span>
+                            <div className="flex gap-3 items-start bg-emerald-950/20 border border-emerald-700/30 rounded-xl p-3">
+                              <span className="text-lg flex-shrink-0">🎁</span>
                               <div>
-                                <b className="text-white block mb-0.5">Fecha límite de edición</b>
-                                <span className="text-slate-400">Puedes guardar y modificar tus pronósticos hasta el inicio del primer partido del Mundial:<br />
-                                <b className="text-amber-400">11 de junio de 2026 · 21:00h (hora España)</b></span>
+                                <b className="text-emerald-400 block mb-0.5">¡Plazo ampliado para dar más margen!</b>
+                                <span className="text-slate-400">Para que pueda apuntarse el máximo de gente, hemos extendido el plazo 24 horas. Puedes guardar y modificar tus pronósticos hasta:<br />
+                                <b className="text-emerald-300 text-sm">12 de junio de 2026 · 21:00h (hora España)</b></span>
+                              </div>
+                            </div>
+                            <div className="flex gap-3 items-start bg-amber-950/20 border border-amber-700/40 rounded-xl p-3">
+                              <span className="text-lg flex-shrink-0">⚠️</span>
+                              <div>
+                                <b className="text-amber-400 block mb-0.5">Partidos excluidos de la porra</b>
+                                <span className="text-slate-400">Los <b className="text-white">2 primeros partidos del torneo</b> quedan fuera de la competición al haber comenzado antes del cierre de inscripciones. Sus inputs aparecen <b className="text-white">bloqueados y marcados con 🔒</b> en la pestaña de Pronósticos. <b className="text-white">No puntúan</b> para nadie, independientemente del resultado.</span>
                               </div>
                             </div>
                             <div className="flex gap-3 items-start bg-red-950/30 border border-red-600/50 rounded-xl p-3">
                               <span className="text-lg flex-shrink-0">🔒</span>
                               <div>
-                                <b className="text-red-400 uppercase tracking-wider block mb-1">BLOQUEO AUTOMÁTICO</b>
-                                <span className="text-slate-300">Una vez que empiece el primer partido del Mundial, <b className="text-white">la plataforma bloqueará la edición para todos los usuarios</b>. Podrás seguir viendo tus predicciones y la clasificación, pero <b className="text-white">ya no podrás modificar nada</b>.</span>
+                                <b className="text-red-400 uppercase tracking-wider block mb-1">Bloqueo automático</b>
+                                <span className="text-slate-300">El <b className="text-white">12 de junio a las 21:00h</b> la plataforma cierra la edición para todos. A partir de ese momento podrás ver tus predicciones y la clasificación, pero <b className="text-white">no podrás modificar nada</b>.</span>
                               </div>
                             </div>
                             <div className="flex gap-3 items-start bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
                               <span className="text-lg flex-shrink-0">✏️</span>
                               <div>
-                                <b className="text-white block mb-0.5">Antes del cierre puedes editar libremente</b>
-                                <span className="text-slate-400">Hasta la fecha límite, vuelve cuantas veces quieras a cualquier fase, modifica tus predicciones y pulsa Guardar. Cada guardado sobreescribe el anterior.</span>
+                                <b className="text-white block mb-0.5">Hasta el cierre puedes editar libremente</b>
+                                <span className="text-slate-400">Vuelve cuantas veces quieras, modifica tus predicciones y pulsa Guardar. Los <b className="text-white">102 partidos restantes</b> están disponibles. Cada guardado sobreescribe el anterior.</span>
                               </div>
                             </div>
                           </>

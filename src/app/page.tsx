@@ -5,7 +5,7 @@ import { Trophy, Mail, ArrowRight, ShieldCheck, Sparkles, Loader2, CheckCircle2,
 import { supabase } from "@/lib/supabase";
 
 /** Partido inaugural: 11 jun 2026 21:00h Madrid = 19:00h UTC */
-const KICKOFF_DEADLINE = new Date("2026-06-11T19:00:00Z");
+const KICKOFF_DEADLINE = new Date("2026-06-12T19:00:00Z");
 
 interface TimeLeft {
   days: number; hours: number; minutes: number; seconds: number; expired: boolean;
@@ -149,7 +149,7 @@ export default function WelcomePage() {
             </div>
             <div className="bg-emerald-950/40 border-t border-emerald-800/30 px-4 py-2 text-center">
               <p className="text-[10px] text-emerald-600 font-black uppercase tracking-wider">
-                Cierre automático: 11 jun 2026 · 21:00h España
+                Cierre automático: 12 jun 2026 · 21:00h España
               </p>
             </div>
           </div>
