@@ -9,7 +9,7 @@ import type { User } from "@supabase/supabase-js";
 import type { GroupLetter, Match, Team } from "@/types";
 import { MatchCard } from "@/components/MatchCard";
 import { ClassificationTable } from "@/components/ClassificationTable";
-import { getAuthUser, loadPredictions, savePredictions, saveOfficialResults, getLeaderboard, loadOfficialResults, ensureProfile, getMyPaymentStatus, getAllProfiles, updatePaymentStatus } from "@/lib/supabase";
+import { getAuthUser, loadPredictions, savePredictions, saveOfficialResults, getLeaderboard, loadOfficialResults, ensureProfile, getMyPaymentStatus, getAllProfiles, updatePaymentStatus, getAllChampionPredictions } from "@/lib/supabase";
 import type { PredictionRow, PaymentStatus } from "@/lib/supabase";
 
 const GROUP_LETTERS: GroupLetter[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -233,6 +233,8 @@ export default function PredictionsDashboard() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
   const [allProfiles, setAllProfiles] = useState<{ id: string; payment_status: PaymentStatus; has_predictions: boolean }[]>([]);
+  const [champion, setChampion] = useState<string | null>(null);
+  const [allChampions, setAllChampions] = useState<Record<string, string>>({});
 
   // ── Toast helper ────────────────────────────────────────────────────────────
 
@@ -254,17 +256,22 @@ export default function PredictionsDashboard() {
           // Garantizar que existe fila en profiles para este usuario
           await ensureProfile(user.id).catch(() => {});
 
-          const [savedResult, boardResult, officialResult, paymentResult, profilesResult] = await Promise.allSettled([
+          const [savedResult, boardResult, officialResult, paymentResult, profilesResult, championsResult] = await Promise.allSettled([
             loadPredictions(user.id),
             getLeaderboard(),
             loadOfficialResults(),
             getMyPaymentStatus(user.id),
             isAdminUser ? getAllProfiles() : Promise.resolve([]),
+            isAdminUser ? getAllChampionPredictions() : Promise.resolve({}),
           ]);
 
           // Each call is independent — one failing doesn't block the others
           if (savedResult.status === "fulfilled" && savedResult.value.length > 0) {
             setMatches(prev => mergeWithPredictions(prev, savedResult.value));
+            const championPred = savedResult.value.find(p => p.match_id === "m105");
+            if (championPred?.team_a && championPred.team_a !== "Por Seleccionar") {
+              setChampion(championPred.team_a);
+            }
           } else if (savedResult.status === "rejected") {
             console.warn("[init] loadPredictions failed:", savedResult.reason);
           }
@@ -281,6 +288,10 @@ export default function PredictionsDashboard() {
 
           if (profilesResult.status === "fulfilled" && profilesResult.value.length > 0) {
             setAllProfiles(profilesResult.value);
+          }
+
+          if (championsResult.status === "fulfilled") {
+            setAllChampions(championsResult.value as Record<string, string>);
           }
 
           if (officialResult.status === "fulfilled" && officialResult.value.length > 0) {
@@ -335,7 +346,7 @@ export default function PredictionsDashboard() {
     return {
       matchesCount: ms.length,
       predictedCount: ms.filter(m => isKnockoutPhase
-        ? (m.qualifier != null && m.teamA !== "Por Seleccionar" && m.teamB !== "Por Seleccionar")
+        ? m.qualifier != null
         : (m.goalsA !== "" && m.goalsB !== "")
       ).length,
     };
@@ -426,6 +437,9 @@ export default function PredictionsDashboard() {
           team_b: m.teamB,
         }));
 
+      if (champion) {
+        rows.push({ match_id: "m105", goals_a: 1, goals_b: 0, team_a: champion, team_b: "" });
+      }
       await savePredictions(authUser.id, rows);
       showToast("success", "¡Pronósticos guardados correctamente!");
     } catch (err) {
@@ -694,6 +708,38 @@ export default function PredictionsDashboard() {
                             </div>
                           </div>
 
+                          {/* ── CAMPEÓN DEL MUNDO ── */}
+                          <div className="w-44 flex-shrink-0 flex flex-col items-center justify-center">
+                            <div className="text-[10px] font-black uppercase text-amber-400 text-center border-b border-amber-800/40 pb-1 mb-3 w-full">🏆 Campeón (x8)</div>
+                            <div className="w-full gaming-card rounded-2xl border-2 border-amber-600/60 bg-amber-950/20 p-3 space-y-2 shadow-[0_0_24px_rgba(245,158,11,0.15)]">
+                              <div className="text-center text-xl">🌍</div>
+                              <p className="text-[9px] font-black uppercase text-amber-400 text-center tracking-wider">Campeón del Mundo</p>
+                              {isLocked ? (
+                                <div className="text-center text-xs font-black text-white">
+                                  {champion
+                                    ? <>{AVAILABLE_TEAMS.find(t => t.name === champion)?.flag} {champion}</>
+                                    : <span className="text-slate-500 italic">Sin seleccionar</span>}
+                                </div>
+                              ) : (
+                                <select
+                                  value={champion ?? ""}
+                                  onChange={e => setChampion(e.target.value || null)}
+                                  className="w-full bg-[#0b0f1c] border border-amber-700/40 rounded-lg px-2 py-1.5 text-[10px] text-white font-bold focus:outline-none focus:border-amber-500"
+                                >
+                                  <option value="">— Seleccionar —</option>
+                                  {AVAILABLE_TEAMS.map(t => (
+                                    <option key={t.name} value={t.name}>{t.flag} {t.name}</option>
+                                  ))}
+                                </select>
+                              )}
+                              {champion && !isLocked && (
+                                <div className="text-center text-[9px] text-amber-400 font-black">
+                                  {AVAILABLE_TEAMS.find(t => t.name === champion)?.flag} {champion} ✓
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
                         </div>
                       </div>
                     </div>
@@ -763,6 +809,11 @@ export default function PredictionsDashboard() {
                           const isMatchLocked = LOCKED_MATCH_IDS.has(match.dbId ?? "");
                           return (
                             <div key={match.id}>
+                              {activePhase === "final" && (
+                                <div className={`flex items-center justify-center gap-2 mb-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider ${match.id === "f2" ? "bg-amber-950/40 border border-amber-600/50 text-amber-300" : "bg-slate-800/60 border border-slate-700/50 text-slate-300"}`}>
+                                  {match.id === "f2" ? "🏆 Gran Final" : "🥉 3er y 4to Puesto"}
+                                </div>
+                              )}
                               {isMatchLocked && (
                                 <div className="flex items-center gap-1.5 mb-2 px-3 py-1.5 bg-red-950/30 border border-red-700/40 rounded-lg text-[10px] font-black text-red-400 uppercase tracking-wider">
                                   🔒 Partido iniciado · Plazo cerrado
@@ -938,6 +989,11 @@ export default function PredictionsDashboard() {
                             <span className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide border ${profile.has_predictions ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" : "bg-slate-700/30 border-slate-700/40 text-slate-500"}`}>
                               <span className={`w-1.5 h-1.5 rounded-full inline-block ${profile.has_predictions ? "bg-emerald-400" : "bg-slate-600"}`} />
                               {profile.has_predictions ? "Pronóstico ✓" : "Sin pronóstico"}
+                            </span>
+                            <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black border bg-amber-500/10 border-amber-600/30 text-amber-300">
+                              🏆 {allChampions[profile.id]
+                                ? <>{AVAILABLE_TEAMS.find(t => t.name === allChampions[profile.id])?.flag} {allChampions[profile.id]}</>
+                                : <span className="text-slate-500">Sin campeón</span>}
                             </span>
                             <div className="flex items-center gap-2 flex-shrink-0">
                               {/* Badge actual — clic para avanzar al siguiente estado */}

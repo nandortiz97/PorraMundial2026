@@ -169,6 +169,17 @@ export async function getAllProfiles(): Promise<{ id: string; payment_status: Pa
   }));
 }
 
+/** Admin only: get champion prediction for every user. */
+export async function getAllChampionPredictions(): Promise<Record<string, string>> {
+  const { data } = await supabase
+    .from("predictions")
+    .select("user_id, team_a")
+    .eq("match_id", "m105");
+  const map: Record<string, string> = {};
+  (data ?? []).forEach((r: any) => { if (r.team_a) map[r.user_id] = r.team_a; });
+  return map;
+}
+
 /** Admin only: set a user's payment_status. */
 export async function updatePaymentStatus(userId: string, status: PaymentStatus): Promise<void> {
   const { error } = await supabase
